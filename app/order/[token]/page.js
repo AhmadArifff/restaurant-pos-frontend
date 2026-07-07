@@ -463,6 +463,7 @@ export default function CustomerOrderPage() {
   const orderRef = useRef(null);
   const discountPreviewRef = useRef(null);
   const sessionTouchRef = useRef({ inFlight: null, lastTouchedAt: 0 });
+  const customerPhoneForApi = normalizeIndonesianPhoneForSubmit(customerPhone);
 
   useEffect(() => { cartRef.current = cart; }, [cart]);
   useEffect(() => { orderRef.current = order; }, [order]);
@@ -712,7 +713,6 @@ export default function CustomerOrderPage() {
   const tableBusy = !order && Number(table?.active_orders || 0) > 0;
   const branchLabel = table?.branch_name || 'Cabang Sultan Kebab';
   const branchArea = table?.branch_area || table?.branch_address || '';
-  const customerPhoneForApi = normalizeIndonesianPhoneForSubmit(customerPhone);
   const reviewRewardText = reviewRewardProgram
     ? `Review semua menu dan dapatkan voucher diskon ${
         reviewRewardProgram.discount_type === 'percent'
