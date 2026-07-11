@@ -232,8 +232,8 @@ export default function StockIssuesTab() {
   };
 
   return (
-    <section className="space-y-5">
-      <div className="rounded-3xl border border-slate-700/60 bg-slate-800/70 p-5">
+    <section data-tour="stock-issues" className="space-y-5">
+      <div data-tour="stock-issues-header" className="rounded-3xl border border-slate-700/60 bg-slate-800/70 p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.22em] text-orange-300">Sisa Stok</p>
@@ -246,13 +246,14 @@ export default function StockIssuesTab() {
           <button
             type="button"
             onClick={refresh}
+            data-tour="stock-issues-refresh"
             className="rounded-2xl border border-orange-500/30 px-4 py-3 text-sm font-black text-orange-300 transition hover:bg-orange-500/10"
           >
             Refresh Data
           </button>
         </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div data-tour="stock-issues-summary" className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SummaryCard title="Total laporan" value={summary?.total_issues} sub="Semua sisa stok" className="border-sky-500/20 bg-sky-500/10 text-sky-200" />
           <SummaryCard title="Menunggu" value={summary?.pending_count} sub="Perlu review admin" className="border-yellow-500/20 bg-yellow-500/10 text-yellow-200" />
           <SummaryCard title="Selesai" value={summary?.resolved_count} sub="Sudah ditindaklanjuti" className="border-emerald-500/20 bg-emerald-500/10 text-emerald-200" />
@@ -261,14 +262,14 @@ export default function StockIssuesTab() {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
-        <form onSubmit={submitIssue} className="rounded-3xl border border-slate-700/60 bg-slate-800/80 p-5">
+        <form data-tour="stock-issues-form" onSubmit={submitIssue} className="rounded-3xl border border-slate-700/60 bg-slate-800/80 p-5">
           <h3 className="text-lg font-black text-white">Catat Sisa Stok</h3>
           <p className="mt-1 text-xs leading-5 text-slate-500">
             Laporan ini tidak langsung mengurangi stok. Admin tetap perlu review agar audit stok lebih jelas.
           </p>
 
           <div className="mt-5 space-y-4">
-            <div>
+            <div data-tour="stock-issues-item-field">
               <label className="mb-1 block text-xs font-semibold text-slate-500">Bahan baku</label>
               <select
                 value={form.stock_item_id}
@@ -284,7 +285,7 @@ export default function StockIssuesTab() {
               </select>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div data-tour="stock-issues-qty-unit-fields" className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-slate-500">Jumlah bermasalah</label>
                 <input
@@ -308,7 +309,7 @@ export default function StockIssuesTab() {
               </div>
             </div>
 
-            <div>
+            <div data-tour="stock-issues-reason-field">
               <label className="mb-1 block text-xs font-semibold text-slate-500">Alasan</label>
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(reasonMeta).map(([key, meta]) => (
@@ -316,6 +317,7 @@ export default function StockIssuesTab() {
                     key={key}
                     type="button"
                     onClick={() => setForm((prev) => ({ ...prev, reason: key }))}
+                    data-tour={`stock-issues-reason-${key}`}
                     className={`rounded-xl border px-3 py-3 text-left text-xs font-black transition ${
                       form.reason === key
                         ? meta.className
@@ -328,7 +330,7 @@ export default function StockIssuesTab() {
               </div>
             </div>
 
-            <div>
+            <div data-tour="stock-issues-description-field">
               <label className="mb-1 block text-xs font-semibold text-slate-500">Deskripsi</label>
               <textarea
                 value={form.description}
@@ -338,7 +340,7 @@ export default function StockIssuesTab() {
               />
             </div>
 
-            <div>
+            <div data-tour="stock-issues-comments-field">
               <label className="mb-1 block text-xs font-semibold text-slate-500">Catatan tambahan</label>
               <textarea
                 value={form.comments}
@@ -351,6 +353,7 @@ export default function StockIssuesTab() {
             <button
               type="submit"
               disabled={saving}
+              data-tour="stock-issues-submit-button"
               className="w-full rounded-2xl bg-orange-500 px-4 py-3 text-sm font-black text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? 'Menyimpan...' : 'Catat Sisa Stok'}
@@ -358,8 +361,8 @@ export default function StockIssuesTab() {
           </div>
         </form>
 
-        <div className="rounded-3xl border border-slate-700/60 bg-slate-800/80 p-5">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div data-tour="stock-issues-list" className="rounded-3xl border border-slate-700/60 bg-slate-800/80 p-5">
+          <div data-tour="stock-issues-filters" className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'reported', label: 'Menunggu' },
@@ -398,7 +401,7 @@ export default function StockIssuesTab() {
             </select>
           </div>
 
-          <div className="mt-5 space-y-3">
+          <div data-tour="stock-issues-items" className="mt-5 space-y-3">
             {loading ? (
               <div className="rounded-2xl border border-slate-700 bg-slate-900 p-8 text-center text-sm text-slate-400">
                 Memuat sisa stok...
@@ -409,7 +412,7 @@ export default function StockIssuesTab() {
                 <p className="mt-1 text-sm text-slate-500">Catat stok expired, rusak, hilang, atau selisih fisik dari form di kiri.</p>
               </div>
             ) : issues.map((issue) => (
-              <article key={issue.id} className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
+              <article key={issue.id} data-tour="stock-issues-card" className="rounded-2xl border border-slate-700 bg-slate-900 p-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -425,7 +428,7 @@ export default function StockIssuesTab() {
                     </p>
                   </div>
                   {isAdmin && issue.status === 'reported' && (
-                    <div className="flex shrink-0 gap-2">
+                    <div data-tour="stock-issues-admin-actions" className="flex shrink-0 gap-2">
                       <button
                         type="button"
                         onClick={() => handleResolve(issue)}
@@ -470,7 +473,7 @@ export default function StockIssuesTab() {
             ))}
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-700/60 pt-4">
+          <div data-tour="stock-issues-pagination" className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-700/60 pt-4">
             <button
               type="button"
               onClick={() => setPage((value) => Math.max(1, value - 1))}

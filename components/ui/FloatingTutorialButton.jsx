@@ -538,6 +538,104 @@ const TUTORIALS = [
         body: 'Tombol ini menjalankan submit asli. Admin menyimpan pengeluaran stok, sedangkan kasir mengirim pengajuan stok untuk disetujui admin.',
         details: ['Tutorial sudah mengisi contoh bahan dan qty.', 'Admin perlu memilih kasir terlebih dahulu.', 'Klik tombol ini jika ingin menyimpan demo ke Supabase.', 'Setelah sukses, data masuk ke Pengeluaran atau Pengajuan sesuai role.'],
       },
+      {
+        selector: '[data-tour="stock-issues"]',
+        actions: ['stock-close-out-modal', 'stock-tab-issues'],
+        title: 'Tab Sisa Stok',
+        body: 'Tab Sisa Stok dipakai untuk tracking bahan yang tidak layak pakai, expired, rusak, hilang, atau selisih fisik. Alur ini membantu tim mencatat masalah stok tanpa langsung mengubah saldo sebelum direview.',
+        details: ['Tab ini tersedia untuk admin dan kasir.', 'Laporan sisa stok menjadi audit tambahan di luar pemasukan dan pengeluaran.', 'Data yang dicatat bisa diproses admin sebagai selesai atau ditolak.', 'Gunakan tab ini untuk menjaga stok fisik dan sistem tetap sinkron.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-header"]',
+        actions: ['stock-tab-issues'],
+        title: 'Header Sisa Stok',
+        body: 'Header menjelaskan fungsi tab dan menyediakan tombol refresh untuk memuat ulang ringkasan serta daftar laporan.',
+        details: ['Judul menjelaskan scope expired, rusak, dan hilang.', 'Deskripsi mengingatkan bahwa data ini untuk tracking selisih stok.', 'Refresh Data mengambil ulang summary dan list laporan.', 'Bagian ini menjadi titik awal membaca kondisi sisa stok bermasalah.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-summary"]',
+        actions: ['stock-tab-issues'],
+        title: 'Ringkasan Sisa Stok',
+        body: 'Kartu summary memberi gambaran cepat jumlah laporan dan status tindak lanjut.',
+        details: ['Total laporan menghitung semua data sisa stok.', 'Menunggu berarti laporan perlu review admin.', 'Selesai berarti sudah ditindaklanjuti.', 'Ditolak berarti laporan tidak diproses karena alasan tertentu.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-form"]',
+        actions: ['stock-tab-issues'],
+        title: 'Form Catat Sisa Stok',
+        body: 'Form ini mencatat bahan bermasalah. Laporan tidak langsung mengurangi stok, sehingga audit tetap aman sampai admin menindaklanjuti.',
+        details: ['Pilih bahan yang bermasalah.', 'Isi jumlah dan satuan sesuai stok fisik.', 'Tentukan alasan seperti expired, rusak, hilang, atau lainnya.', 'Tambahkan deskripsi supaya admin tahu kondisi sebenarnya.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-item-field"]',
+        actions: ['stock-demo-issue-fill'],
+        title: 'Pilih Bahan Sisa Stok',
+        body: 'Dropdown ini mengambil bahan dari saldo stok gudang cabang aktif.',
+        details: ['Label opsi menampilkan nama bahan dan stok saat ini.', 'Pilih bahan yang benar-benar bermasalah secara fisik.', 'Jika bahan tidak muncul, cek saldo stok gudang terlebih dahulu.', 'Tutorial memilih bahan pertama yang tersedia sebagai contoh.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-qty-unit-fields"]',
+        actions: ['stock-demo-issue-fill'],
+        title: 'Jumlah dan Satuan Bermasalah',
+        body: 'Input jumlah menjelaskan berapa stok yang bermasalah, sedangkan satuan mengikuti bahan yang dipilih.',
+        details: ['Jumlah wajib lebih dari 0.', 'Jumlah tidak boleh melebihi stok gudang saat ini.', 'Satuan otomatis terisi setelah bahan dipilih, tapi tetap bisa dikoreksi.', 'Validasi ini mencegah laporan stok bermasalah lebih besar dari stok tersedia.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-reason-field"]',
+        actions: ['stock-demo-issue-fill'],
+        title: 'Alasan Sisa Stok',
+        body: 'Alasan membantu mengelompokkan penyebab stok tidak bisa dipakai atau tidak sesuai.',
+        details: ['Expired untuk bahan melewati masa layak pakai.', 'Rusak untuk bahan bocor, berubah warna, bau, atau kualitas turun.', 'Hilang untuk selisih stok fisik yang tidak ditemukan.', 'Lainnya untuk kondisi khusus yang dijelaskan di deskripsi.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-description-field"]',
+        actions: ['stock-demo-issue-fill'],
+        title: 'Deskripsi Kondisi',
+        body: 'Deskripsi menjelaskan detail masalah supaya admin bisa memutuskan tindak lanjut dengan konteks lengkap.',
+        details: ['Contoh: kemasan bocor, bau tidak normal, atau stok fisik tidak sesuai.', 'Tuliskan lokasi penyimpanan bila perlu.', 'Deskripsi yang jelas mempercepat proses review.', 'Field ini membantu audit saat histori dibaca kembali.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-comments-field"]',
+        actions: ['stock-demo-issue-fill'],
+        title: 'Catatan Tambahan',
+        body: 'Catatan tambahan bersifat opsional untuk informasi pendukung.',
+        details: ['Bisa diisi nama staff, hasil pengecekan, atau tindakan sementara.', 'Catatan membantu jika laporan perlu follow-up.', 'Jangan masukkan informasi yang tidak relevan.', 'Catatan akan ikut tersimpan bersama laporan.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-submit-button"]',
+        actions: ['stock-demo-issue-fill'],
+        title: 'Submit Laporan Sisa Stok',
+        body: 'Tombol ini mengirim laporan sisa stok ke backend. Data masuk sebagai Menunggu dan belum otomatis mengurangi saldo.',
+        details: ['Klik hanya jika data laporan sudah benar.', 'Sistem menampilkan modal sukses atau gagal.', 'Setelah sukses, laporan muncul di daftar Menunggu.', 'Admin dapat menyelesaikan atau menolak laporan tersebut.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-list"]',
+        actions: ['stock-tab-issues'],
+        title: 'Daftar Laporan Sisa Stok',
+        body: 'Panel kanan menampilkan laporan yang sudah dicatat beserta statusnya.',
+        details: ['Jika data kosong, empty state memberi arahan untuk membuat laporan.', 'Jika ada data, setiap laporan tampil sebagai kartu.', 'Kartu menampilkan bahan, qty, alasan, status, pelapor, dan waktu.', 'Daftar ini menjadi pusat review laporan sisa stok.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-filters"]',
+        actions: ['stock-tab-issues'],
+        title: 'Filter Laporan Sisa Stok',
+        body: 'Filter membantu mencari laporan berdasarkan status dan alasan.',
+        details: ['Menunggu menampilkan laporan yang perlu review.', 'Semua menampilkan seluruh laporan.', 'Riwayat menampilkan laporan selesai atau ditolak.', 'Dropdown alasan mempersempit laporan expired, rusak, hilang, atau lainnya.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-items"]',
+        actions: ['stock-tab-issues'],
+        title: 'Isi Daftar Laporan',
+        body: 'Area ini berisi loading state, empty state, atau kartu laporan sesuai data yang tersedia.',
+        details: ['Loading muncul saat data sedang diambil.', 'Empty state muncul jika belum ada laporan.', 'Kartu laporan muncul jika sudah ada data.', 'Admin melihat aksi Selesaikan dan Tolak pada laporan yang masih Menunggu.'],
+      },
+      {
+        selector: '[data-tour="stock-issues-pagination"]',
+        actions: ['stock-tab-issues'],
+        title: 'Pagination Sisa Stok',
+        body: 'Pagination menjaga daftar laporan tetap ringan ketika histori sudah banyak.',
+        details: ['Sebelumnya mundur ke halaman laporan sebelumnya.', 'Berikutnya maju ke halaman berikutnya.', 'Label halaman menunjukkan posisi data saat ini.', 'Filter status dan alasan akan mengembalikan halaman ke awal.'],
+      },
     ],
   },
   {
@@ -2166,6 +2264,20 @@ const STOCK_STEP_ORDER = [
   '[data-tour="stock-out-total"]',
   '[data-tour="stock-out-actions"]',
   '[data-tour="stock-out-save-button"]',
+  '[data-tour="stock-issues"]',
+  '[data-tour="stock-issues-header"]',
+  '[data-tour="stock-issues-summary"]',
+  '[data-tour="stock-issues-form"]',
+  '[data-tour="stock-issues-item-field"]',
+  '[data-tour="stock-issues-qty-unit-fields"]',
+  '[data-tour="stock-issues-reason-field"]',
+  '[data-tour="stock-issues-description-field"]',
+  '[data-tour="stock-issues-comments-field"]',
+  '[data-tour="stock-issues-submit-button"]',
+  '[data-tour="stock-issues-list"]',
+  '[data-tour="stock-issues-filters"]',
+  '[data-tour="stock-issues-items"]',
+  '[data-tour="stock-issues-pagination"]',
   '[data-tour="stock-requests"]',
   '[data-tour="stock-request-filters"]',
   '[data-tour="stock-request-list"]',
@@ -2418,6 +2530,9 @@ export default function FloatingTutorialButton() {
       recipeQty: '2',
       manualQty: '160',
       manualNote: 'Stok untuk Adana Kebab Platter demo tutorial',
+      issueQty: '1',
+      issueDescription: 'Demo tutorial: bahan terlihat berubah kualitas dan perlu direview admin.',
+      issueComments: 'Dipisahkan sementara dari area bahan siap pakai.',
     };
 
     const findOptionByText = (select, keywords = []) => {
@@ -2965,6 +3080,42 @@ export default function FloatingTutorialButton() {
         );
 
         const timer = window.setTimeout(() => runActions(index + 1, 0), 520);
+        actionTimers.push(timer);
+        return;
+      }
+
+      if (action === 'stock-demo-issue-fill') {
+        const issueSelect = document.querySelector('[data-tour="stock-issues-item-field"] select');
+        if ((!issueSelect || !Array.from(issueSelect.options || []).some((option) => option.value)) && attempt < 24) {
+          const timer = window.setTimeout(() => runActions(index, attempt + 1), 160);
+          actionTimers.push(timer);
+          return;
+        }
+
+        if (issueSelect) {
+          const issueOption = findOptionByText(issueSelect, [
+            stockTutorialDummy.masterName,
+            ...stockTutorialDummy.fallbackStockKeywords,
+          ]);
+          if (issueOption?.value && issueSelect.value !== issueOption.value) {
+            setInputValue(issueSelect, issueOption.value);
+          }
+        }
+
+        const qtyUnitInputs = document.querySelectorAll('[data-tour="stock-issues-qty-unit-fields"] input');
+        setInputValue(qtyUnitInputs[0], stockTutorialDummy.issueQty);
+        const expiredButton = document.querySelector('[data-tour="stock-issues-reason-expired"]');
+        expiredButton?.click();
+        setInputValue(
+          document.querySelector('[data-tour="stock-issues-description-field"] textarea'),
+          stockTutorialDummy.issueDescription
+        );
+        setInputValue(
+          document.querySelector('[data-tour="stock-issues-comments-field"] textarea'),
+          stockTutorialDummy.issueComments
+        );
+
+        const timer = window.setTimeout(() => runActions(index + 1, 0), 560);
         actionTimers.push(timer);
         return;
       }
