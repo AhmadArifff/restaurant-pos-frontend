@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import AdminLayout from '@/components/layout/AdminLayout';
 import { useAuthStore } from '@/store/authStore';
 import SuccessModal from '@/components/stock/SuccessModal';
+import StockIssuesTab from '@/components/stock/StockIssuesTab';
 import { showConfirm } from '@/lib/modalDialog';
 import {
   StockMasterSkeleton,
@@ -1042,6 +1043,7 @@ function AdminStockPage({ successModal, setSuccessModal }) {
         <TabBtn data-tour-action="stock-tab-master" active={tab==='master'}   onClick={() => setTab('master')}>   📦 Bahan Baku</TabBtn>
         <TabBtn data-tour-action="stock-tab-warehouse" active={tab==='main'}     onClick={() => setTab('main')}>     🏪 Stok Gudang</TabBtn>
         <TabBtn data-tour-action="stock-tab-requests" active={tab==='requests'} onClick={() => setTab('requests')}> 📋 Pengajuan Kasir</TabBtn>
+        <TabBtn active={tab==='issues'} onClick={() => setTab('issues')}> ⚠️ Sisa Stok</TabBtn>
         </div>
         {stockRefreshing && (
           <span className="rounded-full border border-sky-500/25 bg-sky-500/10 px-3 py-1.5 text-xs font-bold text-sky-200">
@@ -1944,6 +1946,8 @@ function AdminStockPage({ successModal, setSuccessModal }) {
           }
         </div>
       ))}
+
+      {tab==='issues' && <StockIssuesTab />}
 
       {/* ══ MODAL: TAMBAH/EDIT BAHAN BAKU ══ */}
       {showForm && (
@@ -2865,6 +2869,7 @@ function KasirStockPage({ successModal, setSuccessModal }) {
         <div className="flex flex-wrap gap-2 bg-slate-800/50 rounded-2xl p-1.5 w-fit">
         <TabBtn data-tour-action="stock-tab-warehouse" active={tab==='gudang'}   onClick={() => setTab('gudang')}>   🏪 Stok Gudang</TabBtn>
         <TabBtn data-tour-action="stock-tab-requests" active={tab==='requests'} onClick={() => setTab('requests')}> 📋 Pengajuan Saya</TabBtn>
+        <TabBtn active={tab==='issues'} onClick={() => setTab('issues')}> ⚠️ Sisa Stok</TabBtn>
         </div>
         {stockRefreshing && (
           <span className="rounded-full border border-sky-500/25 bg-sky-500/10 px-3 py-1.5 text-xs font-bold text-sky-200">
@@ -3252,6 +3257,8 @@ function KasirStockPage({ successModal, setSuccessModal }) {
           }
         </div>
       ))}
+
+      {tab === 'issues' && <StockIssuesTab />}
 
       {/* ══ MODAL: CATAT PENGELUARAN (KASIR) ══ */}
       {showOutForm && (
