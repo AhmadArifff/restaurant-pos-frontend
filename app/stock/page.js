@@ -22,9 +22,9 @@ import {
 // Di AdminStockPage — tambah useEffect untuk baca query params dari POS
 import { useSearchParams } from 'next/navigation';
 const MASTER_TREND_CARD_PAGE_SIZE = 8;
-const MASTER_TABLE_PAGE_SIZE = 10;
-const STOCK_IN_PREVIEW_LIMIT = 10;
 const STOCK_IN_FILTER_PAGE_SIZE = 10;
+const DEFAULT_TABLE_PAGE_SIZE = 10;
+const TABLE_PAGE_SIZE_OPTIONS = [5, 10, 50, 100, 'all'];
 
 const toLocalDateKey = (date = new Date()) => {
   const value = date instanceof Date ? date : new Date(date);
@@ -449,6 +449,102 @@ function EmptyState({ icon = '📋', title, sub }) {
 }
 
 // ── ADMIN VIEW ────────────────────────────────────────────────
+const normalizeTablePageSize = (value) => (value === 'all' ? 'all' : Number(value || DEFAULT_TABLE_PAGE_SIZE));
+const getTablePageCount = (totalRows, pageSize) => {
+  const normalized = normalizeTablePageSize(pageSize);
+  if (normalized === 'all') return 1;
+  return Math.max(1, Math.ceil(Number(totalRows || 0) / normalized));
+};
+const getTableOffset = (page, pageSize) => {
+  const normalized = normalizeTablePageSize(pageSize);
+  if (normalized === 'all') return 0;
+  return Math.max(0, Number(page || 0) * normalized);
+};
+const getTableRows = (rows, page, pageSize) => {
+  const data = Array.isArray(rows) ? rows : [];
+  const normalized = normalizeTablePageSize(pageSize);
+  if (normalized === 'all') return data;
+  const start = getTableOffset(page, normalized);
+  return data.slice(start, start + normalized);
+};
+const getTableRangeText = (totalRows, page, pageSize) => {
+  const total = Number(totalRows || 0);
+  if (!total) return '0 data';
+  const normalized = normalizeTablePageSize(pageSize);
+  if (normalized === 'all') return `1-${total}`;
+  const start = getTableOffset(page, normalized) + 1;
+  return `${start}-${Math.min(start + normalized - 1, total)}`;
+};
+
+function TablePagination({
+  totalRows = 0,
+  page = 0,
+  pageSize = DEFAULT_TABLE_PAGE_SIZE,
+  onPageChange,
+  onPageSizeChange,
+  label = 'data',
+}) {
+  const total = Number(totalRows || 0);
+  const pageCount = getTablePageCount(total, pageSize);
+  const normalizedSize = normalizeTablePageSize(pageSize);
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-700/50 bg-slate-900/35 px-4 py-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-slate-500">Tampil</span>
+        <select
+          value={normalizedSize}
+          onChange={(event) => onPageSizeChange?.(normalizeTablePageSize(event.target.value))}
+          className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-black text-slate-200 outline-none focus:border-orange-500/60"
+        >
+          {TABLE_PAGE_SIZE_OPTIONS.map((option) => (
+            <option key={option} value={option}>{option === 'all' ? 'All' : option}</option>
+          ))}
+        </select>
+        <span className="text-xs text-slate-500">
+          {getTableRangeText(total, page, normalizedSize)} dari {total} {label}
+        </span>
+      </div>
+
+      {pageCount > 1 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onPageChange?.(Math.max(0, page - 1))}
+            disabled={page <= 0}
+            className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300 transition-all hover:border-orange-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Sebelumnya
+          </button>
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {Array.from({ length: pageCount }).map((_, pageIndex) => (
+              <button
+                key={pageIndex}
+                type="button"
+                onClick={() => onPageChange?.(pageIndex)}
+                aria-label={`Lihat ${label} halaman ${pageIndex + 1}`}
+                className={`h-2.5 rounded-full transition-all ${
+                  page === pageIndex
+                    ? 'w-8 bg-orange-400 shadow-lg shadow-orange-500/30'
+                    : 'w-2.5 bg-slate-600 hover:bg-slate-400'
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => onPageChange?.(Math.min(pageCount - 1, page + 1))}
+            disabled={page >= pageCount - 1}
+            className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300 transition-all hover:border-orange-500/40 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Berikutnya
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function StockTutorialDemo() {
   const masterRows = [
     { name: 'Daging Cincang Bumbu', unit: 'gram', min: 5000, stock: 33800, price: 78, status: 'Aman' },
@@ -616,10 +712,16 @@ function AdminStockPage({ successModal, setSuccessModal }) {
   const [trendCardsExpanded, setTrendCardsExpanded] = useState(false);
   const [trendCardPage, setTrendCardPage] = useState(0);
   const [masterTablePage, setMasterTablePage] = useState(0);
+  const [masterTablePageSize, setMasterTablePageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
+  const [summaryTablePage, setSummaryTablePage] = useState(0);
+  const [summaryTablePageSize, setSummaryTablePageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
+  const [stockInTablePage, setStockInTablePage] = useState(0);
+  const [stockInTablePageSize, setStockInTablePageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
+  const [stockOutTablePage, setStockOutTablePage] = useState(0);
+  const [stockOutTablePageSize, setStockOutTablePageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
   const [masterSearch, setMasterSearch] = useState('');
   const [warehouseSearch, setWarehouseSearch] = useState('');
   const [requestSearch, setRequestSearch] = useState('');
-  const [stockInExpanded, setStockInExpanded] = useState(false);
   const [stockInFilterExpanded, setStockInFilterExpanded] = useState(false);
   const [stockInFilterPage, setStockInFilterPage] = useState(0);
 
@@ -775,11 +877,8 @@ function AdminStockPage({ successModal, setSuccessModal }) {
         trendCardPage * MASTER_TREND_CARD_PAGE_SIZE,
         trendCardPage * MASTER_TREND_CARD_PAGE_SIZE + MASTER_TREND_CARD_PAGE_SIZE
       );
-  const masterTablePageCount = Math.max(1, Math.ceil(filteredStockItemsWithSummary.length / MASTER_TABLE_PAGE_SIZE));
-  const visibleMasterItems = filteredStockItemsWithSummary.slice(
-    masterTablePage * MASTER_TABLE_PAGE_SIZE,
-    masterTablePage * MASTER_TABLE_PAGE_SIZE + MASTER_TABLE_PAGE_SIZE
-  );
+  const masterTablePageCount = getTablePageCount(filteredStockItemsWithSummary.length, masterTablePageSize);
+  const visibleMasterItems = getTableRows(filteredStockItemsWithSummary, masterTablePage, masterTablePageSize);
 
   const searchParams = useSearchParams();
 
@@ -981,6 +1080,8 @@ function AdminStockPage({ successModal, setSuccessModal }) {
   // const outData  = daily.length > 0 ? daily : monthly.filter(r => r.type==='out');
   const outData = daily;
   const filteredSummary = summary.filter((row) => rowMatchesSearch(row, warehouseSearch, ['name', 'unit']));
+  const summaryTablePageCount = getTablePageCount(filteredSummary.length, summaryTablePageSize);
+  const visibleSummaryRows = getTableRows(filteredSummary, summaryTablePage, summaryTablePageSize);
   const searchedInData = inData.filter((row) => rowMatchesSearch(row, warehouseSearch, [
     'item_name', 'unit', 'note', 'created_by_name',
   ]));
@@ -995,10 +1096,13 @@ function AdminStockPage({ successModal, setSuccessModal }) {
   const filteredInRows = filterItemId
     ? searchedInData.filter((row) => row.item_name === filterItemId)
     : searchedInData;
-  const visibleStockInRows = stockInExpanded ? filteredInRows : filteredInRows.slice(0, STOCK_IN_PREVIEW_LIMIT);
+  const stockInTablePageCount = getTablePageCount(filteredInRows.length, stockInTablePageSize);
+  const visibleStockInRows = getTableRows(filteredInRows, stockInTablePage, stockInTablePageSize);
   const searchedOutData = outData.filter((row) => rowMatchesSearch(row, warehouseSearch, [
     'item_name', 'unit', 'note', 'branch_name', 'stock_owner_name', 'target_user_name', 'created_by_name', 'admin_name', 'request_status', 'type',
   ]));
+  const stockOutTablePageCount = getTablePageCount(searchedOutData.length, stockOutTablePageSize);
+  const visibleStockOutRows = getTableRows(searchedOutData, stockOutTablePage, stockOutTablePageSize);
   const filteredRequests = requests.filter((req) => {
     const requestFieldsMatch = rowMatchesSearch(req, requestSearch, [
       'user_name', 'status', 'note', 'approved_by_name', 'created_by_admin_name',
@@ -1030,7 +1134,24 @@ function AdminStockPage({ successModal, setSuccessModal }) {
   }, [stockInFilterPage, stockInFilterPageCount]);
 
   useEffect(() => {
-    setStockInExpanded(false);
+    if (summaryTablePage >= summaryTablePageCount) setSummaryTablePage(0);
+  }, [summaryTablePage, summaryTablePageCount]);
+
+  useEffect(() => {
+    if (stockInTablePage >= stockInTablePageCount) setStockInTablePage(0);
+  }, [stockInTablePage, stockInTablePageCount]);
+
+  useEffect(() => {
+    if (stockOutTablePage >= stockOutTablePageCount) setStockOutTablePage(0);
+  }, [stockOutTablePage, stockOutTablePageCount]);
+
+  useEffect(() => {
+    setSummaryTablePage(0);
+    setStockInTablePage(0);
+    setStockOutTablePage(0);
+  }, [warehouseSearch, mainTab, filterItemId, stockInDateFrom, stockInDateTo, selDate, selDateTo, outTypeFilter]);
+
+  useEffect(() => {
     setStockInFilterExpanded(false);
     setStockInFilterPage(0);
     setFilterItemId(null);
@@ -1169,10 +1290,10 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                 <div data-tour="stock-master-table-summary" className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700/50 bg-slate-900/35 px-4 py-3">
                   <div>
                     <p className="text-sm font-bold text-white">
-                      Baris bahan baku {masterTablePage * MASTER_TABLE_PAGE_SIZE + 1}-{Math.min((masterTablePage + 1) * MASTER_TABLE_PAGE_SIZE, filteredStockItemsWithSummary.length)}
+                      Baris bahan baku {getTableRangeText(filteredStockItemsWithSummary.length, masterTablePage, masterTablePageSize)}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {filteredStockItemsWithSummary.length} total bahan baku tersimpan - 10 baris per halaman
+                      {filteredStockItemsWithSummary.length} total bahan baku tersimpan
                     </p>
                   </div>
                   <span className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300">
@@ -1190,7 +1311,7 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     </thead>
                     <tbody>
                       {visibleMasterItems.map((item, i) => (
-                        <tr key={item.id} className={trC(masterTablePage * MASTER_TABLE_PAGE_SIZE + i)}>
+                        <tr key={item.id} className={trC(getTableOffset(masterTablePage, masterTablePageSize) + i)}>
                           <td className={`${tdC} text-white font-semibold`}>{item.name}</td>
                           <td className={`${tdC} text-slate-400`}>{item.unit}</td>
                           <td className={`${tdC} text-slate-400`}>{item.min_stock} {item.unit}</td>
@@ -1275,39 +1396,19 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     </tbody>
                   </table>
                 </div>
-                {masterTablePageCount > 1 && (
-                  <div data-tour="stock-master-table-pagination" className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-700/50 bg-slate-900/35 px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => setMasterTablePage((page) => (page === 0 ? masterTablePageCount - 1 : page - 1))}
-                      className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300 transition-all hover:border-orange-500/40 hover:text-white"
-                    >
-                      Sebelumnya
-                    </button>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      {Array.from({ length: masterTablePageCount }).map((_, pageIndex) => (
-                        <button
-                          key={pageIndex}
-                          type="button"
-                          onClick={() => setMasterTablePage(pageIndex)}
-                          aria-label={`Lihat bahan baku halaman ${pageIndex + 1}`}
-                          className={`h-2.5 rounded-full transition-all ${
-                            masterTablePage === pageIndex
-                              ? 'w-8 bg-orange-400 shadow-lg shadow-orange-500/30'
-                              : 'w-2.5 bg-slate-600 hover:bg-slate-400'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setMasterTablePage((page) => (page + 1) % masterTablePageCount)}
-                      className="rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300 transition-all hover:border-orange-500/40 hover:text-white"
-                    >
-                      Berikutnya
-                    </button>
-                  </div>
-                )}
+                <div data-tour="stock-master-table-pagination">
+                  <TablePagination
+                    totalRows={filteredStockItemsWithSummary.length}
+                    page={masterTablePage}
+                    pageSize={masterTablePageSize}
+                    onPageChange={setMasterTablePage}
+                    onPageSizeChange={(size) => {
+                      setMasterTablePageSize(size);
+                      setMasterTablePage(0);
+                    }}
+                    label="bahan"
+                  />
+                </div>
               </div>
             )
           }
@@ -1328,7 +1429,6 @@ function AdminStockPage({ successModal, setSuccessModal }) {
               value={warehouseSearch}
               onChange={(e) => {
                 setWarehouseSearch(e.target.value);
-                setStockInExpanded(false);
               }}
               placeholder="Cari stok gudang..."
               className="w-full rounded-xl border border-slate-600 bg-slate-800 px-3 py-2 text-xs font-semibold text-white outline-none placeholder:text-slate-500 focus:border-orange-500/60 sm:w-56"
@@ -1378,10 +1478,10 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     <tbody>
                       {filteredSummary.length===0
                         ? <tr><td colSpan={6}><EmptyState title="Belum ada data stok" sub="Catat pembelian di tab Pemasukan" /></td></tr>
-                        : filteredSummary.map((row,i) => {
+                        : visibleSummaryRows.map((row,i) => {
                           const cur = Number(row.current_stock);
                           return (
-                            <tr key={row.id} className={trC(i)}>
+                            <tr key={row.id} className={trC(getTableOffset(summaryTablePage, summaryTablePageSize) + i)}>
                               <td className={`${tdC} text-white font-semibold`}>{row.name}</td>
                               <td className={`${tdC} text-slate-400`}>{row.unit}</td>
                               <td className={tdC}>
@@ -1411,6 +1511,17 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     </tbody>
                   </table>
                 </div>
+                <TablePagination
+                  totalRows={filteredSummary.length}
+                  page={summaryTablePage}
+                  pageSize={summaryTablePageSize}
+                  onPageChange={setSummaryTablePage}
+                  onPageSizeChange={(size) => {
+                    setSummaryTablePageSize(size);
+                    setSummaryTablePage(0);
+                  }}
+                  label="saldo"
+                />
               </div>
             </div>
           )}
@@ -1530,7 +1641,7 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                         if (filteredInRows.length === 0)
                           return <tr><td colSpan={9}><EmptyState title="Belum ada pemasukan bulan ini" /></td></tr>;
                         return visibleStockInRows.map((row, i) => (
-                          <tr key={row.id} className={trC(i)}>
+                          <tr key={row.id} className={trC(getTableOffset(stockInTablePage, stockInTablePageSize) + i)}>
                             <td className={`${tdC} text-slate-400 text-xs whitespace-nowrap`}>
                               {new Date(row.created_at).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' })}
                             </td>
@@ -1585,20 +1696,17 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     </tbody>
                   </table>
                 </div>
-                {filteredInRows.length > STOCK_IN_PREVIEW_LIMIT && (
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-700/50 bg-slate-900/35 px-4 py-3">
-                    <p className="text-xs text-slate-500">
-                      Menampilkan {visibleStockInRows.length} dari {filteredInRows.length} data pemasukan
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setStockInExpanded((current) => !current)}
-                      className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-xs font-black text-blue-300 transition-all hover:bg-blue-500/20"
-                    >
-                      {stockInExpanded ? 'Hide ke 10 data' : 'Expand semua data'}
-                    </button>
-                  </div>
-                )}
+                <TablePagination
+                  totalRows={filteredInRows.length}
+                  page={stockInTablePage}
+                  pageSize={stockInTablePageSize}
+                  onPageChange={setStockInTablePage}
+                  onPageSizeChange={(size) => {
+                    setStockInTablePageSize(size);
+                    setStockInTablePage(0);
+                  }}
+                  label="pemasukan"
+                />
               </div>
             </div>
           )}
@@ -1671,14 +1779,14 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     <tbody>
                       {searchedOutData.length === 0
                         ? <tr><td colSpan={11}><EmptyState title="Tidak ada data pengeluaran" /></td></tr>
-                        : searchedOutData.map((row, i) => {
+                        : visibleStockOutRows.map((row, i) => {
                           const isPending  = row.type === 'pending_out' && row.request_status === 'pending';
                           const isRejected = row.type === 'pending_out' && row.request_status === 'rejected';
                           const isTx       = row.type === 'transaction';
                           const isApproved = !isPending && !isRejected;
 
                           return (
-                            <tr key={`${row.id}-${i}`} className={trC(i)}>
+                            <tr key={`${row.id}-${i}`} className={trC(getTableOffset(stockOutTablePage, stockOutTablePageSize) + i)}>
                               <td className={`${tdC} text-slate-400 text-xs whitespace-nowrap`}>
                                 {new Date(row.created_at).toLocaleDateString('id-ID', {
                                   day:'numeric', month:'short', year:'numeric'
@@ -1761,6 +1869,17 @@ function AdminStockPage({ successModal, setSuccessModal }) {
                     </tbody>
                   </table>
                 </div>
+                <TablePagination
+                  totalRows={searchedOutData.length}
+                  page={stockOutTablePage}
+                  pageSize={stockOutTablePageSize}
+                  onPageChange={setStockOutTablePage}
+                  onPageSizeChange={(size) => {
+                    setStockOutTablePageSize(size);
+                    setStockOutTablePage(0);
+                  }}
+                  label="pengeluaran"
+                />
               </div>
             </div>
           )}
@@ -2673,6 +2792,10 @@ function KasirStockPage({ successModal, setSuccessModal }) {
   const [outMenuSelections, setOutMenuSelections] = useState([createEmptyRecipeSelection()]);
   const [warehouseSearch, setWarehouseSearch] = useState('');
   const [requestSearch, setRequestSearch] = useState('');
+  const [summaryTablePage, setSummaryTablePage] = useState(0);
+  const [summaryTablePageSize, setSummaryTablePageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
+  const [stockOutTablePage, setStockOutTablePage] = useState(0);
+  const [stockOutTablePageSize, setStockOutTablePageSize] = useState(DEFAULT_TABLE_PAGE_SIZE);
 
   const hasOutMenuSelection = hasRecipeProductSelection(outMenuSelections);
   const hasOutRecipeSelection = getRecipeSelectionDetails(productOptions, outMenuSelections).length > 0;
@@ -2842,9 +2965,13 @@ function KasirStockPage({ successModal, setSuccessModal }) {
   // Tampilkan hanya pengeluaran yang diapprove dan milik user ini
   const outData = daily;
   const filteredSummary = summary.filter((row) => rowMatchesSearch(row, warehouseSearch, ['name', 'unit']));
+  const summaryTablePageCount = getTablePageCount(filteredSummary.length, summaryTablePageSize);
+  const visibleSummaryRows = getTableRows(filteredSummary, summaryTablePage, summaryTablePageSize);
   const searchedOutData = outData.filter((row) => rowMatchesSearch(row, warehouseSearch, [
     'item_name', 'unit', 'note', 'branch_name', 'stock_owner_name', 'target_user_name', 'created_by_name', 'admin_name', 'request_status', 'type',
   ]));
+  const stockOutTablePageCount = getTablePageCount(searchedOutData.length, stockOutTablePageSize);
+  const visibleStockOutRows = getTableRows(searchedOutData, stockOutTablePage, stockOutTablePageSize);
   const filteredRequests = requests.filter((req) => {
     const requestFieldsMatch = rowMatchesSearch(req, requestSearch, [
       'status', 'note', 'approved_by_name',
@@ -2862,6 +2989,19 @@ function KasirStockPage({ successModal, setSuccessModal }) {
     || (dailyLoading && daily.length > 0)
     || (requestsLoading && requests.length > 0)
   );
+
+  useEffect(() => {
+    if (summaryTablePage >= summaryTablePageCount) setSummaryTablePage(0);
+  }, [summaryTablePage, summaryTablePageCount]);
+
+  useEffect(() => {
+    if (stockOutTablePage >= stockOutTablePageCount) setStockOutTablePage(0);
+  }, [stockOutTablePage, stockOutTablePageCount]);
+
+  useEffect(() => {
+    setSummaryTablePage(0);
+    setStockOutTablePage(0);
+  }, [warehouseSearch, mainTab, selDate, selDateTo, outTypeFilter]);
 
   return (
     <>
@@ -2916,10 +3056,10 @@ function KasirStockPage({ successModal, setSuccessModal }) {
                     <tbody>
                       {filteredSummary.length === 0
                         ? <tr><td colSpan={6}><EmptyState title="Belum ada data stok" /></td></tr>
-                        : filteredSummary.map((row, i) => {
+                        : visibleSummaryRows.map((row, i) => {
                             const cur = Number(row.current_stock);
                             return (
-                              <tr key={row.id} className={trC(i)}>
+                              <tr key={row.id} className={trC(getTableOffset(summaryTablePage, summaryTablePageSize) + i)}>
                                 <td className={`${tdC} text-white font-semibold`}>{row.name}</td>
                                 <td className={`${tdC} text-slate-400`}>{row.unit}</td>
                                 <td className={tdC}>
@@ -2951,6 +3091,17 @@ function KasirStockPage({ successModal, setSuccessModal }) {
                     </tbody>
                   </table>
                 </div>
+                <TablePagination
+                  totalRows={filteredSummary.length}
+                  page={summaryTablePage}
+                  pageSize={summaryTablePageSize}
+                  onPageChange={setSummaryTablePage}
+                  onPageSizeChange={(size) => {
+                    setSummaryTablePageSize(size);
+                    setSummaryTablePage(0);
+                  }}
+                  label="saldo"
+                />
               </div>
             </div>
           )}
@@ -3025,14 +3176,14 @@ function KasirStockPage({ successModal, setSuccessModal }) {
                     <tbody>
                       {searchedOutData.length === 0
                         ? <tr><td colSpan={11}><EmptyState title="Tidak ada data pengeluaran pada periode ini" /></td></tr>
-                        : searchedOutData.map((row, i) => {
+                        : visibleStockOutRows.map((row, i) => {
                           const isPending  = row.type === 'pending_out' && row.request_status === 'pending';
                           const isRejected = row.type === 'pending_out' && row.request_status === 'rejected';
                           const isTx       = row.type === 'transaction';
                           const isApproved = !isPending && !isRejected;
 
                           return (
-                            <tr key={`${row.id}-${i}`} className={trC(i)}>
+                            <tr key={`${row.id}-${i}`} className={trC(getTableOffset(stockOutTablePage, stockOutTablePageSize) + i)}>
                               <td className={`${tdC} text-slate-400 text-xs whitespace-nowrap`}>
                                 {new Date(row.created_at).toLocaleDateString('id-ID', {
                                   day:'numeric', month:'short', year:'numeric'
@@ -3101,6 +3252,17 @@ function KasirStockPage({ successModal, setSuccessModal }) {
                     </tbody>
                   </table>
                 </div>
+                <TablePagination
+                  totalRows={searchedOutData.length}
+                  page={stockOutTablePage}
+                  pageSize={stockOutTablePageSize}
+                  onPageChange={setStockOutTablePage}
+                  onPageSizeChange={(size) => {
+                    setStockOutTablePageSize(size);
+                    setStockOutTablePage(0);
+                  }}
+                  label="pengeluaran"
+                />
               </div>
             </div>
           )}
